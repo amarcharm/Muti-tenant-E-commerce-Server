@@ -1,9 +1,10 @@
 const express = require('express');
-const mongoose = require('mongoose');
 const cors = require('cors');
 const helmet = require('helmet');
 require('dotenv').config();
 
+const morgan = require('morgan')
+const database = require('./config/database')
 
 const app = express();
 
@@ -11,18 +12,14 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 app.use(helmet());
+app.use(morgan('dev'))
 
-
-// Connect to MongoDB 
-mongoose
-  .connect(process.env.MONGO_URI)
-  .then(() => {
-    console.log('MongoDB connected');
-    app.listen(process.env.PORT, () => {
+app.listen(process.env.PORT, () => {
+      database()
       console.log(`Server running on port http://localhost:5555`);
     });
-  })
-  .catch((err) => console.error('DB connection error:', err));
+
+
 
 
 

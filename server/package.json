@@ -9,7 +9,6 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/amarcharm/Muti-tenant-E-commerce.git"
-    
   },
   "keywords": [],
   "author": "",
@@ -25,6 +24,7 @@
     "express": "^5.2.1",
     "helmet": "^8.1.0",
     "mongoose": "^9.6.2",
+    "morgan": "^1.10.1",
     "nodemon": "^3.1.14"
   }
 }
