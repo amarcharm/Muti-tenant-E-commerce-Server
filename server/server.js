@@ -6,7 +6,10 @@ require('dotenv').config()
 
 const morgan = require('morgan')
 const database = require('./config/database')
+
 const authRoutes = require('./routes/authRoutes')
+const vendorRoutes = require('./routes/vendorRoutes')
+const adminRoutes = require('./routes/adminRoutes')
 
 const app = express()
 
