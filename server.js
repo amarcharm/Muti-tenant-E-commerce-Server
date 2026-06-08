@@ -10,6 +10,7 @@ const database = require('./config/database')
 const authRoutes = require('./routes/authRoutes')
 const vendorRoutes = require('./routes/vendorRoutes')
 const adminRoutes = require('./routes/adminRoutes')
+const storeRoutes = require('./routes/storeRoutes')
 
 const app = express()
 
@@ -19,6 +20,7 @@ app.use(cors())
 app.use(helmet())
 app.use(morgan('dev'))
 app.use('/api/auth', authRoutes)
+app.use('/api/stores', storeRoutes)
 
 app.listen(process.env.PORT, () => {
       database()
