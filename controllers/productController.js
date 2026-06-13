@@ -73,4 +73,17 @@ const deleteProduct = async (req, res) => {
   }
 };
 
-module.exports = { addProduct, getMyProducts, getAllProducts, deleteProduct };
+// Get single product by ID
+const getProductById = async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id).populate('storeId', 'storeName');
+    if (!product) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+    res.status(200).json({ product });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+module.exports = { addProduct, getMyProducts, getAllProducts, deleteProduct, getProductById };
