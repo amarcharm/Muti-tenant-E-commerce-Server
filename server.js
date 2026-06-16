@@ -12,6 +12,7 @@ const vendorRoutes = require('./routes/vendorRoutes')
 const adminRoutes = require('./routes/adminRoutes')
 const storeRoutes = require('./routes/storeRoutes')
 const productRoutes = require('./routes/productRoutes')
+const orderRoutes = require('./routes/orderRoutes')
 
 const app = express()
 
@@ -23,6 +24,7 @@ app.use(morgan('dev'))
 app.use('/api/auth', authRoutes)
 app.use('/api/stores', storeRoutes)
 app.use('/api/products', productRoutes)
+app.use('/api/orders', orderRoutes)
 
 app.listen(process.env.PORT, () => {
       database()
