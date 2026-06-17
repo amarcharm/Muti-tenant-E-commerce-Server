@@ -94,4 +94,57 @@ const getOrderById = async (req, res) => {
   }
 };
 
-module.exports = { placeOrder, getMyOrders, getOrderById };
+// Get all orders for the vendor's store
+const getVendorOrders = async (req, res) => {
+  try {
+    const Store = require('../models/Store');
+
+    // Find vendor's store first
+    const store = await Store.findOne({ vendorId: req.user.id });
+    if (!store) {
+      return res.status(404).json({ message: 'No store found. Create a store first.' });
+    }
+
+    const orders = await Order.find({ storeId: store._id })
+      .populate('customerId', 'name email')
+      .populate('items.productId', 'name price')
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({ orders });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// Update order status
+const updateOrderStatus = async (req, res) => {
+  try {
+    const Store = require('../models/Store');
+    const { status } = req.body;
+
+    const allowedStatuses = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
+    if (!allowedStatuses.includes(status)) {
+      return res.status(400).json({ message: 'Invalid status value' });
+    }
+
+    const order = await Order.findById(req.params.id);
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    // Make sure this order belongs to the vendor's store
+    const store = await Store.findOne({ vendorId: req.user.id });
+    if (!store || order.storeId.toString() !== store._id.toString()) {
+      return res.status(403).json({ message: 'Not authorized to update this order' });
+    }
+
+    order.status = status;
+    await order.save();
+
+    res.status(200).json({ message: 'Order status updated', order });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+module.exports = { placeOrder, getMyOrders, getOrderById, getVendorOrders, updateOrderStatus, };
