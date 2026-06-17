@@ -6,7 +6,7 @@ const generateToken = (user) => {
   return jwt.sign(
     {id: user._id, role: user.role},
     process.env.JWT_SECRET,
-    { expriesIn: '5d'}
+    { expiresIn: '5d'}
   )
 }
 
@@ -41,31 +41,45 @@ const register = async(req,res) =>{
   }
 }
 
-const login = async (req,res) => {
-    try{
-      const{email,password} = req.body
+const login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
 
-      const user = await User.findOne({email})
-      if(!user){
-        return res.status(400).json({message: 'Invalid email'})
-      }
+    const user = await User.findOne({ email });
 
-      const isMatch = await bcrypt.compare(password, user.password)
-      if(!isMatch){
-        return res.send(400).json({message: 'Invalid email or password'})
-      }
-
-      const token = generateToken(user)
-
-      res.send(200).json({
-        message: 'Login successful',
-        token,
-        user:{is: user_id, name: user.name, email: user.email, role: user.role}
-      })
+    if (!user) {
+      return res.status(400).json({
+        message: "Invalid email"
+      });
     }
-    catch(error){
-      res.status(500).json({message:'Server error',error:error.message})
+
+    const isMatch = await bcrypt.compare(password, user.password);
+
+    if (!isMatch) {
+      return res.status(400).json({
+        message: "Invalid email or password"
+      });
     }
-}
+
+    const token = generateToken(user);
+
+    return res.status(200).json({
+      message: "Login successful",
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      }
+    });
+
+  } catch (error) {
+    return res.status(500).json({
+      message: "Server error",
+      error: error.message
+    });
+  }
+};
 
 module.exports = {register,login}
