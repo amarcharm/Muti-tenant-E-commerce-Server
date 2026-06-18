@@ -33,7 +33,7 @@ const register = async(req,res) =>{
     res.status(201).json({
       message: 'User registered successfully',
       token,
-      user: { id: user._id, name: user.name, email: user.email, role: user.role },
+      user: { id: user._id, name: user.name, email: user.email, role: user.role, approved: user.approved },
     })
   }
   catch(error) {
@@ -61,6 +61,12 @@ const login = async (req, res) => {
       });
     }
 
+    if (user.role === 'vendor' && user.approved === false) {
+      return res.status(403).json({
+        message: "Vendor account is pending approval"
+      });
+    }
+
     const token = generateToken(user);
 
     return res.status(200).json({
@@ -70,7 +76,8 @@ const login = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role
+        role: user.role,
+        approved: user.approved,
       }
     });
 

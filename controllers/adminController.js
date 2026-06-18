@@ -87,9 +87,39 @@ const rejectStore = async (req, res) => {
 const getAllVendors = async (req, res) => {
   try {
     const vendors = await User.find({ role: 'vendor' })
-      .select('name email createdAt')
+      .select('name email approved createdAt')
       .sort({ createdAt: -1 });
     res.status(200).json({ vendors });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// Approve a vendor
+const approveVendor = async (req, res) => {
+  try {
+    const vendor = await User.findById(req.params.id);
+    if (!vendor || vendor.role !== 'vendor') {
+      return res.status(404).json({ message: 'Vendor not found' });
+    }
+    vendor.approved = true;
+    await vendor.save();
+    res.status(200).json({ message: 'Vendor approved successfully', vendor });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// Reject a vendor
+const rejectVendor = async (req, res) => {
+  try {
+    const vendor = await User.findById(req.params.id);
+    if (!vendor || vendor.role !== 'vendor') {
+      return res.status(404).json({ message: 'Vendor not found' });
+    }
+    vendor.approved = false;
+    await vendor.save();
+    res.status(200).json({ message: 'Vendor rejected successfully', vendor });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -132,6 +162,8 @@ module.exports = {
   approveStore,
   rejectStore,
   getAllVendors,
+  approveVendor,
+  rejectVendor,
   getAllOrders,
   deleteVendor,
 };
