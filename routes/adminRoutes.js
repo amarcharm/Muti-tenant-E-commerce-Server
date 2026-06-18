@@ -1,13 +1,23 @@
-const express = require('express')
-const router = express.Router()
-const {verifyToken, authorizeRoles} = require('../middleware/authMiddleware')
+const express = require('express');
+const router  = express.Router();
+const {
+  getPlatformStats,
+  getAllStores,
+  approveStore,
+  rejectStore,
+  getAllVendors,
+  getAllOrders,
+  deleteVendor,
+} = require('../controllers/adminController');
+const { verifyToken, authorizeRoles } = require('../middleware/authMiddleware');
 
+// All routes — superadmin only
+router.get('/stats',              verifyToken, authorizeRoles('superadmin'), getPlatformStats);
+router.get('/stores',             verifyToken, authorizeRoles('superadmin'), getAllStores);
+router.patch('/stores/:id/approve', verifyToken, authorizeRoles('superadmin'), approveStore);
+router.patch('/stores/:id/reject',  verifyToken, authorizeRoles('superadmin'), rejectStore);
+router.get('/vendors',            verifyToken, authorizeRoles('superadmin'), getAllVendors);
+router.get('/orders',             verifyToken, authorizeRoles('superadmin'), getAllOrders);
+router.delete('/vendors/:id',     verifyToken, authorizeRoles('superadmin'), deleteVendor);
 
-router.get('/dashboard', verifyToken, authorizeRoles('superadmin'),(req,res) => {
-  res.json({
-    message: 'Welcome to admin dashboard',
-    user: req.user,
-  })
-})
-
-module.exports = router
+module.exports = router;
