@@ -1,92 +1,100 @@
-const User = require('../models/user')
-const bcrypt = require('bcryptjs')
-const jwt = require('jsonwebtoken')
+const User    = require('../models/User');
+const bcrypt  = require('bcryptjs');
+const jwt     = require('jsonwebtoken');
+const { sendWelcomeEmail } = require('../config/emailService');
 
+// ─── Generate JWT token ──────────────────────────────────────────
 const generateToken = (user) => {
   return jwt.sign(
-    {id: user._id, role: user.role},
+    { id: user._id, role: user.role },
     process.env.JWT_SECRET,
-    { expiresIn: '5d'}
-  )
-}
+    { expiresIn: '7d' }
+  );
+};
 
-const register = async(req,res) =>{
-  try{
-    const{name, email, password, role} = req.body
+// ─── Register ────────────────────────────────────────────────────
+const register = async (req, res) => {
+  try {
+    const { name, email, password, role } = req.body;
 
-    const existingUser = await User.findOne({email})
-    if(existingUser){
-      return res.status(400).json({message:'Email already registered'})
+    // Check if email already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: 'Email already registered' });
     }
 
-    const hashedPassword = await bcrypt.hash(password,10)
+    // Hash the password
+    const hashedPassword = await bcrypt.hash(password, 10);
 
+    // Create the user
     const user = await User.create({
       name,
       email,
       password: hashedPassword,
-      role: role || 'customer',
-    })
+      role:     role || 'customer',
+    });
 
-    const token = generateToken(user)
+    const token = generateToken(user);
+
+    // Send welcome email
+    // Wrapped in try-catch so a failed email does not break registration
+    try {
+      await sendWelcomeEmail({
+        toEmail: user.email,
+        name:    user.name,
+        role:    user.role,
+      });
+    } catch (emailError) {
+      console.log('Welcome email failed:', emailError.message);
+    }
 
     res.status(201).json({
       message: 'User registered successfully',
       token,
-      user: { id: user._id, name: user.name, email: user.email, role: user.role, approved: user.approved },
-    })
+      user: {
+        id:    user._id,
+        name:  user.name,
+        email: user.email,
+        role:  user.role,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
-  catch(error) {
-    res.status(500).json({message:'Server error', error:error.message})
-  }
-}
+};
 
+// ─── Login ───────────────────────────────────────────────────────
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    // Check if user exists
     const user = await User.findOne({ email });
-
     if (!user) {
-      return res.status(400).json({
-        message: "Invalid email"
-      });
+      return res.status(400).json({ message: 'Invalid email or password' });
     }
 
+    // Check password
     const isMatch = await bcrypt.compare(password, user.password);
-
     if (!isMatch) {
-      return res.status(400).json({
-        message: "Invalid email or password"
-      });
-    }
-
-    if (user.role === 'vendor' && user.approved === false) {
-      return res.status(403).json({
-        message: "Vendor account is pending approval"
-      });
+      return res.status(400).json({ message: 'Invalid email or password' });
     }
 
     const token = generateToken(user);
 
-    return res.status(200).json({
-      message: "Login successful",
+    res.status(200).json({
+      message: 'Login successful',
       token,
       user: {
-        id: user._id,
-        name: user.name,
+        id:    user._id,
+        name:  user.name,
         email: user.email,
-        role: user.role,
-        approved: user.approved,
-      }
+        role:  user.role,
+      },
     });
-
   } catch (error) {
-    return res.status(500).json({
-      message: "Server error",
-      error: error.message
-    });
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
 
-module.exports = {register,login}
+module.exports = { register, login };
