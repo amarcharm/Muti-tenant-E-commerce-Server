@@ -47,11 +47,58 @@ const getMyProducts = async (req, res) => {
   }
 };
 
-// Get all products (public)
+// Get all products with search, filter and sort support
 const getAllProducts = async (req, res) => {
   try {
-    const products = await Product.find().populate('storeId', 'storeName');
-    res.status(200).json({ products });
+    const {
+      search,
+      category,
+      minPrice,
+      maxPrice,
+      sort,
+      inStock,
+    } = req.query;
+
+    // Build query object dynamically
+    const query = {};
+
+    // Search by name or description
+    if (search) {
+      query.$or = [
+        { name:        { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } },
+      ];
+    }
+
+    // Filter by category
+    if (category && category !== 'All') {
+      query.category = category;
+    }
+
+    // Filter by price range
+    if (minPrice || maxPrice) {
+      query.price = {};
+      if (minPrice) query.price.$gte = Number(minPrice);
+      if (maxPrice) query.price.$lte = Number(maxPrice);
+    }
+
+    // Filter by stock availability
+    if (inStock === 'true') {
+      query.stock = { $gt: 0 };
+    }
+
+    // Build sort object
+    let sortObj = { createdAt: -1 }; // default — newest first
+    if (sort === 'price_asc')  sortObj = { price: 1 };
+    if (sort === 'price_desc') sortObj = { price: -1 };
+    if (sort === 'newest')     sortObj = { createdAt: -1 };
+    if (sort === 'oldest')     sortObj = { createdAt: 1 };
+
+    const products = await Product.find(query)
+      .populate('storeId', 'storeName')
+      .sort(sortObj);
+
+    res.status(200).json({ products, total: products.length });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
